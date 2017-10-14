@@ -51,7 +51,7 @@ dlflag=1
 portdefault=1
 
 skip_rt=1
-sshport=$(random 25000 29000)
+sshport=$(( RANDOM % (29000 - 21000 + 1 ) + 21000 ))
 rudevflag=1
 rurelease=master
 passfile='/etc/nginx/.htpasswd'
