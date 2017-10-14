@@ -51,7 +51,7 @@ dlflag=1
 portdefault=1
 
 skip_rt=1
-sshport=''
+sshport=$(random 25000 29000)
 rudevflag=1
 rurelease=master
 passfile='/etc/nginx/.htpasswd'
@@ -228,7 +228,7 @@ else
 fi
 
 # get options
-OPTS=$(getopt -n "$0" -o dltrmysu:p:w: --long "dload,log,ssh-default,rutorrent-stable,rutorrent-master,force-yes,self-signed,user:,password:,webpass:" -- "$@")
+OPTS=$(getopt -n "$0" -o dltrmysu:p:w: --long "dload,log,rutorrent-stable,rutorrent-master,force-yes,self-signed,user:,password:,webpass:" -- "$@")
 
 eval set -- "$OPTS"
 
@@ -236,7 +236,6 @@ while true; do
   case "$1" in
     -d | --dload ) dlflag=0; shift ;;
     -l | --log ) logfile="$HOME/rtinst.log"; shift ;;
-    -t | --ssh-default ) portdefault=0; shift;;
     -r | --rutorrent-stable ) rudevflag=1; shift;;
     -m | --rutorrent-master ) rudevflag=0; shift;;
     -y | --force-yes ) forceyes=0; shift;;
@@ -528,16 +527,6 @@ sed -i '$ i\* hard nofile 32768\n* soft nofile 16384' /etc/security/limits.conf
 
 echo "Configuring SSH" | tee -a $logfile
 
-oldsshport=$(grep -P '^[#\s]*Port ' /etc/ssh/sshd_config | sed 's/[^0-9]*//g')
-
-if [ "$portdefault" = "0" ]; then
-  sshport=22
-elif [ "$oldsshport" = "22" ] && [ "$portdefault" = "1" ]; then
-  sshport=$(random 21000 29000)
-else
-  sshport=$oldsshport
-fi
-
 sed -i "/^\(\s\|#\)*Port / c\Port $sshport" /etc/ssh/sshd_config
 sed -i "/^\(\s\|#\)*X11Forwarding /c\X11Forwarding no" /etc/ssh/sshd_config
 sed -i '/^\s*PermitRootLogin/ c\PermitRootLogin no' /etc/ssh/sshd_config
@@ -563,7 +552,6 @@ fi
 grep "AllowGroups sudo sshuser" /etc/ssh/sshd_config > /dev/null || echo "AllowGroups sudo sshuser" >> /etc/ssh/sshd_config
 
 service ssh restart 1>> $logfile
-sshport=$(grep 'Port ' /etc/ssh/sshd_config | sed 's/[^0-9]*//g')
 echo "SSH port set to $sshport"
 
 ###############################
